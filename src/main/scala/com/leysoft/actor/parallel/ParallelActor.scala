@@ -1,27 +1,30 @@
-package com.leysoft.actor
+package com.leysoft.actor.parallel
 
 import akka.actor.{Actor, ActorLogging, ActorRef, Props}
 import akka.pattern.ask
 import akka.util.Timeout
+import com.typesafe.config.Config
 
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.{Await, Future}
+import scala.concurrent.Future
 import scala.concurrent.duration._
 import scala.language.postfixOps
 import scala.util.{Failure, Success}
 
-class ParallelActor extends Actor with ActorLogging {
+class ParallelActor(val config: Config) extends Actor with ActorLogging {
 
   implicit val timeout = Timeout(5 seconds)
 
-  val sumActor: ActorRef = context.actorOf(OperationActor.props, "sum-actor")
+  val sumActor: ActorRef = context.actorOf(OperationActor.props,
+    config.getString("system.actor.parallel.sum"))
 
-  val susbtrationActor: ActorRef = context.actorOf(OperationActor.props, "susbtration-actor")
+  val susbtActor: ActorRef = context.actorOf(OperationActor.props,
+    config.getString("system.actor.parallel.susbtration"))
 
   override def receive: Receive = {
     case (a: Int, b: Int) =>
       val sum: Future[Int] = (sumActor ? Sum(a, b)).mapTo[Int]
-      val subtraction: Future[Int] = (susbtrationActor ? Subtraction(a, b)).mapTo[Int]
+      val subtraction: Future[Int] = (susbtActor ? Subtraction(a, b)).mapTo[Int]
       val future = for {
         x <- sum
         y <- subtraction
@@ -35,7 +38,7 @@ class ParallelActor extends Actor with ActorLogging {
 
 object ParallelActor {
 
-  def apply: ParallelActor = new ParallelActor()
+  def apply(config: Config): ParallelActor = new ParallelActor(config)
 
-  def props = Props[ParallelActor]
+  def props(config: Config) = Props(ParallelActor(config))
 }

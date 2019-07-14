@@ -1,4 +1,4 @@
-package com.leysoft.actor
+package com.leysoft.actor.supervisor
 
 import akka.actor.{Actor, ActorLogging, Props}
 

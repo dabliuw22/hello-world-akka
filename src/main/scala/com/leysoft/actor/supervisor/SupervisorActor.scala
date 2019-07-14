@@ -1,12 +1,13 @@
-package com.leysoft.actor
+package com.leysoft.actor.supervisor
 
 import akka.actor.SupervisorStrategy.{Escalate, Restart, Resume, Stop}
 import akka.actor.{Actor, ActorLogging, ActorRef, OneForOneStrategy, Props, SupervisorStrategy}
+import com.typesafe.config.Config
 
 import scala.concurrent.duration._
 import scala.language.postfixOps
 
-class SupervisorActor extends Actor with ActorLogging {
+class SupervisorActor(val config: Config) extends Actor with ActorLogging {
 
   /**
     * Cantidad de veces que se puede reiniciar un actor secundario.
@@ -30,7 +31,8 @@ class SupervisorActor extends Actor with ActorLogging {
   }
 
   override def preStart(): Unit = {
-    child = context.actorOf(ChildActor.props, "child-actor")
+    child = context.actorOf(ChildActor.props,
+      config.getString("system.actor.supervisor.child"))
     //Thread.sleep(100)
   }
 
@@ -46,9 +48,9 @@ class SupervisorActor extends Actor with ActorLogging {
 
 object SupervisorActor {
 
-  def apply: SupervisorActor = new SupervisorActor()
+  def apply(config: Config): SupervisorActor = new SupervisorActor(config)
 
-  def props = Props[SupervisorActor]
+  def props(config: Config) = Props(SupervisorActor(config))
 }
 
 case object ResumeException extends Exception
