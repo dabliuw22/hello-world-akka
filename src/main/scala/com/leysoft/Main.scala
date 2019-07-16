@@ -3,6 +3,7 @@ package com.leysoft
 import akka.actor.ActorSystem
 import com.leysoft.actor.communication.{CheckerUserActor, StoreUserActor, User, UserActor}
 import com.leysoft.actor.parallel.ParallelActor
+import com.leysoft.actor.persistence.{AddCommand, CustomPersistentActor, RemoveCommand}
 import com.leysoft.actor.router.{RandomRouterActor, Work}
 import com.leysoft.actor.supervisor.SupervisorActor
 import com.typesafe.config.Config
@@ -30,6 +31,13 @@ object Main extends App {
   val parallelActor = actorSystem.actorOf(ParallelActor.props(config),
     config.getString("system.actor.parallel.parallel"))
   parallelActor ! (1, 2)
+
+  val persistentActor = actorSystem.actorOf(CustomPersistentActor.props("persintence-id-3"),
+    config.getString("system.actor.persistence"))
+  persistentActor ! AddCommand("data1")
+  persistentActor ! AddCommand("data2")
+  persistentActor ! AddCommand("data3")
+  persistentActor ! RemoveCommand("data2")
 
   Thread.sleep(5000)
 
